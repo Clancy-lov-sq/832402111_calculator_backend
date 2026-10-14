@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Front-end/back-end separated calculator: the browser sends the expression, the back end evaluates it and stores the history in a database." />
+    <title>Calculator System | Front-End and Back-End Separation</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- ===================================================================
+         Header: identity of the system, live connection status, theme switch
+         =================================================================== -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">∑</span>
+        <div class="brand-text">
+          <h1>Calculator System</h1>
+          <p>Front-End / Back-End Separation &middot; Student ID 832402111</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="status" id="connectionStatus" data-state="connecting">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text" id="connectionText">Connecting…</span>
+        </span>
+        <button
+          type="button"
+          class="ghost-button"
+          id="themeToggle"
+          title="Switch between the light and the dark theme"
+          aria-label="Switch theme"
+        >
+          <span id="themeIcon">☾</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================================
+         Body: the calculator on the left, the calculation history on the right
+         =================================================================== -->
+    <main class="workspace">
+      <section class="panel calculator-panel" aria-label="Calculator">
+        <div class="display" id="display">
+          <div class="display-meta">
+            <span class="mode-badge" id="modeBadge">Basic</span>
+            <span class="display-id" id="historyBadge"></span>
+          </div>
+          <input
+            type="text"
+            id="expressionInput"
+            class="display-input"
+            placeholder="Type an expression, e.g. (1+2)*3"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Expression"
+          />
+          <output class="display-result" id="resultOutput" aria-live="polite">0</output>
+          <p class="display-message" id="resultMessage"></p>
+        </div>
+
+        <nav class="tabs" aria-label="Calculator modes">
+          <button type="button" class="tab is-active" data-tab="basic">Basic</button>
+          <button type="button" class="tab" data-tab="scientific">Scientific</button>
+          <button type="button" class="tab" data-tab="convert">Conversion</button>
+        </nav>
+
+        <div class="tab-panel is-active" id="tab-basic">
+          <div class="keypad keypad-basic" id="keypadBasic">
+            <!-- Buttons are rendered by js/ui.js from a data table, so the
+                 layout and the behaviour cannot drift apart. -->
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-scientific">
+          <div class="keypad keypad-scientific" id="keypadScientific"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-convert">
+          <div class="converter">
+            <article class="converter-card">
+              <h2>Number base conversion</h2>
+              <div class="field-row">
+                <label class="field">
+                  <span>Value</span>
+                  <input type="text" id="baseValue" value="255" autocomplete="off" />
+                </label>
+                <label class="field">
+                  <span>Source base</span>
+                  <select id="baseSource">
+                    <option value="dec" selected>Decimal (10)</option>
+                    <option value="bin">Binary (2)</option>
+                    <option value="oct">Octal (8)</option>
+                    <option value="hex">Hexadecimal (16)</option>
+                  </select>
+                </label>
+                <button type="button" class="primary-button" id="baseConvert">Convert</button>
+              </div>
+              <ul class="result-list" id="baseResults">
+                <li class="empty-hint">Enter a value and press Convert.</li>
+              </ul>
+            </article>
+
+            <article class="converter-card">
+              <h2>Unit conversion</h2>
+              <div class="field-row">
+                <label class="field">
+                  <span>Category</span>
+                  <select id="unitCategory"></select>
+                </label>
+                <label class="field">
+                  <span>Value</span>
+                  <input type="number" id="unitValue" value="100" step="any" />
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">
+                  <span>From</span>
+                  <select id="unitFrom"></select>
+                </label>
+                <button type="button" class="ghost-button square" id="unitSwap" title="Swap the two units">⇄</button>
+                <label class="field">
+                  <span>To</span>
+                  <select id="unitTo"></select>
+                </label>
+                <button type="button" class="primary-button" id="unitConvert">Convert</button>
+              </div>
+              <p class="unit-result" id="unitResult">—</p>
+            </article>
+          </div>
+        </div>
+
+        <footer class="panel-footer">
+          <p>
+            Every result and every history record below is produced by
+            <code>POST /api/calculate</code> on the back end. Nothing is evaluated in the browser.
+          </p>
+        </footer>
+      </section>
+
+      <!-- =================================================================
+           History: always read from the back-end database, never from a cache
+           ================================================================= -->
+      <aside class="panel history-panel" id="historyPanel" aria-label="Calculation history">
+        <header class="history-header">
+          <div>
+            <h2>Calculation History</h2>
+            <p class="history-subtitle" id="historySubtitle">Loading…</p>
+          </div>
+          <div class="history-actions">
+            <button type="button" class="ghost-button" id="historyRefresh" title="Query the back end again">⟳</button>
+            <button type="button" class="danger-button" id="historyClear" title="Delete every record">Clear all</button>
+          </div>
+        </header>
+
+        <div class="history-toolbar">
+          <input
+            type="search"
+            id="historySearch"
+            placeholder="Search an expression…"
+            autocomplete="off"
+            aria-label="Search history"
+          />
+          <select id="historyFilter" aria-label="Filter by operation">
+            <option value="">All operations</option>
+            <option value="addition">Addition</option>
+            <option value="subtraction">Subtraction</option>
+            <option value="multiplication">Multiplication</option>
+            <option value="division">Division</option>
+            <option value="power">Power</option>
+            <option value="compound">Compound</option>
+            <option value="scientific">Scientific</option>
+            <option value="number">Number</option>
+          </select>
+        </div>
+
+        <ul class="history-list" id="historyList">
+          <li class="empty-hint">Loading calculation history…</li>
+        </ul>
+
+        <footer class="history-footer">
+          <button type="button" class="ghost-button" id="historyPrev">← Newer</button>
+          <span id="historyPageInfo">Page 1</span>
+          <button type="button" class="ghost-button" id="historyNext">Older →</button>
+        </footer>
+
+        <section class="stats" id="statsPanel" aria-label="Calculation statistics">
+          <h3>Statistics</h3>
+          <div class="stats-grid" id="statsGrid"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Modules are loaded in dependency order; no build step and no bundler,
+         which keeps the deployment a plain static file copy. -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/converter.js"></script>
+    <script src="js/demo.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

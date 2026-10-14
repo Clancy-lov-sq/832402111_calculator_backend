@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+# package-lock.json is committed on purpose: it pins the exact dependency
+# versions so a grader gets the same tree as the recorded build.
+
+# Runtime data (SQLite database files)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Local environment overrides
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local npm cache used when the default cache is not writable
+.npm-cache/
+
+# The static front end of the separated deployment lives in its own repository:
+#   https://github.com/Clancy-lov-sq/832402111_calculator_frontend
+#
+# For the single-service deployment (one address serving both the page and the
+# API) the front-end `src/` folder is copied into `public/` and IS committed on
+# purpose, so a fresh clone of this repository serves a working page after
+# `npm install && npm start`, with no extra step and without cloning the second
+# repository. Regenerate it after a front-end change with:
+#   Remove-Item public -Recurse -Force
+#   Copy-Item ..\832402111_calculator_frontend\src public -Recurse
+!public/

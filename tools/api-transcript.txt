@@ -1,0 +1,228 @@
+﻿API transcript of the calculator back end
+==============================================================================
+Captured : 2026-10-15 03:00:46
+Base URL : http://127.0.0.1:8080
+
+Notation: "status" is the HTTP status code, "response" is the JSON body.
+The API runs in lenient mode, where a rejected expression answers HTTP 200
+with "success": false so that the front end keeps a single response format;
+every other rejection (unknown endpoint, missing record) keeps its 4xx status.
+
+### Service information
+
+------------------------------------------------------------------------------
+GET /api/health
+  status  : 200
+  response: {"success":true,"service":"calculator-backend","version":"1.0.0","status":"ok","database":{"client":"sqlite","status":"connected","storedRecords":16},"limits":{"maxExpressionLength":200,"maxTokenCount":256,"maxNestingDepth":32},"errorHttpMode":"lenient","time":"2026-10-14T19:00:46.416Z"}
+
+------------------------------------------------------------------------------
+GET /api/capabilities
+  status  : 200
+  response: {"success":true,"operators":[{"symbol":"+","display":"+","family":"addition"},{"symbol":"-","display":"−","family":"subtraction"},{"symbol":"*","display":"×","family":"multiplication"},{"symbol":"/","display":"÷","family":"division"},{"symbol":"%","display":"%","family":"modulo"},{"symbol":"**","display":"xʸ","family":"power"}],"functions":{"sin":{"argCount":1},"cos":{"argCount":1},"tan":{"argCount":1},"asin":{"argCount":1},"acos":{"argCount":1},"atan":{"argCount":1},"sinh":{"argCount":1},"cosh":{"argCount":1},"tanh":{"argCount":1},"sqrt":{"argCount":1},"cbrt":{"argCount":1},"log":{"argCount":1},"ln":{"argCount":1},"log10":{"argCount":1},"log2":{"argCount":1},"exp":{"argCount":1},"abs":{"argCount":1},"round":{"argCount":1},"floor":{"argCount":1},"ceil":{"argCount":1},"sign":{"argCount":1},"pow":{"argCount":2},"min":{"argCount":2},"max":{"argCount":2},"mod":{"argCount":2},"hypot":{"argCount":2}},"constants":["pi","π","e","tau","phi"],"bases":[2,8,10,16,36],"unitCategories":["length","mass","temperature","area","volume","time","speed","data"],"modes":["basic","scientific"]}
+
+### Function 1 and 2: basic, decimal, compound and unary calculations
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"12+8"}
+  status  : 201
+  response: {"success":true,"expression":"12+8","result":20,"resultText":"20","operation":"addition","mode":"basic","durationMs":2.673,"historyId":17,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"20-7"}
+  status  : 201
+  response: {"success":true,"expression":"20-7","result":13,"resultText":"13","operation":"subtraction","mode":"basic","durationMs":0.281,"historyId":18,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"6*7"}
+  status  : 201
+  response: {"success":true,"expression":"6*7","result":42,"resultText":"42","operation":"multiplication","mode":"basic","durationMs":0.233,"historyId":19,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"84/12"}
+  status  : 201
+  response: {"success":true,"expression":"84/12","result":7,"resultText":"7","operation":"division","mode":"basic","durationMs":0.358,"historyId":20,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"12.5/2"}
+  status  : 201
+  response: {"success":true,"expression":"12.5/2","result":6.25,"resultText":"6.25","operation":"division","mode":"basic","durationMs":0.136,"historyId":21,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"1+2*3"}
+  status  : 201
+  response: {"success":true,"expression":"1+2*3","result":7,"resultText":"7","operation":"compound","mode":"basic","durationMs":0.131,"historyId":22,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"(1+2)*3"}
+  status  : 201
+  response: {"success":true,"expression":"(1+2)*3","result":9,"resultText":"9","operation":"compound","mode":"basic","durationMs":0.427,"historyId":23,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"10/2+7"}
+  status  : 201
+  response: {"success":true,"expression":"10/2+7","result":12,"resultText":"12","operation":"compound","mode":"basic","durationMs":0.147,"historyId":24,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"8-3*2"}
+  status  : 201
+  response: {"success":true,"expression":"8-3*2","result":2,"resultText":"2","operation":"compound","mode":"basic","durationMs":0.125,"historyId":25,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"-5+8"}
+  status  : 201
+  response: {"success":true,"expression":"-5+8","result":3,"resultText":"3","operation":"compound","mode":"basic","durationMs":0.315,"historyId":26,"createdAt":"2026-10-15 03:00:46"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"3*-2"}
+  status  : 201
+  response: {"success":true,"expression":"3*-2","result":-6,"resultText":"-6","operation":"compound","mode":"basic","durationMs":0.1,"historyId":27,"createdAt":"2026-10-15 03:00:46"}
+
+### Exception handling: every rejected request answers with a stable error code
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"1+*2"}
+  status  : 200
+  response: {"success":false,"error":"PARSER_MISSING_OPERAND","message":"Operator is missing an operand","detail":"The operator \"*\" has no left operand"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"10/(3-3)"}
+  status  : 200
+  response: {"success":false,"error":"EVALUATOR_DIVISION_BY_ZERO","message":"Division by zero","detail":"The expression \"10 / 0\" divides by zero"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"(1+2"}
+  status  : 200
+  response: {"success":false,"error":"PARSER_UNMATCHED_PARENTHESIS","message":"Unmatched parenthesis","detail":"An opening parenthesis is never closed"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"1+2;"}
+  status  : 200
+  response: {"success":false,"error":"TOKENIZER_INVALID_CHARACTER","message":"Expression contains an invalid character","detail":"Character \";\" at position 4 is not allowed"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":""}
+  status  : 200
+  response: {"success":false,"error":"VALIDATION_EMPTY_EXPRESSION","message":"Expression must not be empty"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"sqrt(144)"}
+  status  : 200
+  response: {"success":false,"error":"VALIDATION_INVALID_PARAMETER","message":"Invalid request parameter","detail":"\"sqrt\" is only available in scientific mode; send \"mode\": \"scientific\""}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"9**9**9"}
+  status  : 200
+  response: {"success":false,"error":"EVALUATOR_OVERFLOW","message":"Result is out of the supported range","detail":"The result is too large or too small to be represented"}
+
+### Scientific mode: functions and constants
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"sqrt(144)+2**10/4","mode":"scientific"}
+  status  : 201
+  response: {"success":true,"expression":"sqrt(144)+2**10/4","result":268,"resultText":"268","operation":"compound","mode":"scientific","durationMs":1.284,"historyId":28,"createdAt":"2026-10-15 03:00:47"}
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"sin(0)+cos(0)+ln(e)","mode":"scientific"}
+  status  : 201
+  response: {"success":true,"expression":"sin(0)+cos(0)+ln(e)","result":2,"resultText":"2","operation":"addition","mode":"scientific","durationMs":0.724,"historyId":29,"createdAt":"2026-10-15 03:00:47"}
+
+### Function 3: calculation history read from the database
+
+------------------------------------------------------------------------------
+GET /api/history?limit=5
+  status  : 200
+  response: {"success":true,"total":29,"returned":5,"limit":5,"offset":0,"records":[{"id":29,"expression":"sin(0)+cos(0)+ln(e)","result":2,"resultText":"2","operation":"addition","mode":"scientific","createdAt":"2026-10-15 03:00:47"},{"id":28,"expression":"sqrt(144)+2**10/4","result":268,"resultText":"268","operation":"compound","mode":"scientific","createdAt":"2026-10-15 03:00:47"},{"id":27,"expression":"3*-2","result":-6,"resultText":"-6","operation":"compound","mode":"basic","createdAt":"2026-10-15 03:00:46"},{"id":26,"expression":"-5+8","result":3,"resultText":"3","operation":"compound","mode":"basic","createdAt":"2026-10-15 03:00:46"},{"id":25,"expression":"8-3*2","result":2,"resultText":"2","operation":"compound","mode":"basic","createdAt":"2026-10-15 03:00:46"}]}
+
+------------------------------------------------------------------------------
+GET /api/history?keyword=sqrt
+  status  : 200
+  response: {"success":true,"total":2,"returned":2,"limit":10,"offset":0,"records":[{"id":28,"expression":"sqrt(144)+2**10/4","result":268,"resultText":"268","operation":"compound","mode":"scientific","createdAt":"2026-10-15 03:00:47"},{"id":11,"expression":"sqrt(144)","result":12,"resultText":"12","operation":"scientific","mode":"scientific","createdAt":"2026-10-02 08:41:26"}]}
+
+------------------------------------------------------------------------------
+GET /api/convert/units
+  status  : 200
+  response: {"success":true,"categories":[{"category":"length","name":"Length","baseUnit":"m","units":[{"unit":"mm","name":"Millimetre","symbol":"mm"},{"unit":"cm","name":"Centimetre","symbol":"cm"},{"unit":"m","name":"Metre","symbol":"m"},{"unit":"km","name":"Kilometre","symbol":"km"},{"unit":"in","name":"Inch","symbol":"in"},{"unit":"ft","name":"Foot","symbol":"ft"},{"unit":"yd","name":"Yard","symbol":"yd"},{"unit":"mi","name":"Mile","symbol":"mi"},{"unit":"nmi","name":"Nautical mile","symbol":"nmi"}]},{"category":"mass","name":"Mass","baseUnit":"kg","units":[{"unit":"mg","name":"Milligram","symbol":"mg"},{"unit":"g","name":"Gram","symbol":"g"},{"unit":"kg","name":"Kilogram","symbol":"kg"},{"unit":"t","name":"Tonne","symbol":"t"},{"unit":"oz","name":"Ounce","symbol":"oz"},{"unit":"lb","name":"Pound","symbol":"lb"},{"unit":"斤","name":"Jin (500 g)","symbol":"斤"}]},{"category":"temperature","name":"Temperature","baseUnit":"°C","units":[{"unit":"°c","name":"Celsius","symbol":"°C"},{"unit":"°f","name":"Fahrenheit","symbol":"°F"},{"unit":"k","name":"Kelvin","symbol":"K"}]},{"category":"area","name":"Area","baseUnit":"m²","units":[{"unit":"cm2","name":"Square centimetre","symbol":"cm²"},{"unit":"m2","name":"Square metre","symbol":"m²"},{"unit":"km2","name":"Square kilometre","symbol":"km²"},{"unit":"ha","name":"Hectare","symbol":"ha"},{"unit":"acre","name":"Acre","symbol":"acre"},{"unit":"ft2","name":"Square foot","symbol":"ft²"},{"unit":"亩","name":"Mu (666.67 m²)","symbol":"亩"}]},{"category":"volume","name":"Volume","baseUnit":"L","units":[{"unit":"ml","name":"Millilitre","symbol":"mL"},{"unit":"l","name":"Litre","symbol":"L"},{"unit":"m3","name":"Cubic metre","symbol":"m³"},{"unit":"gal","name":"US gallon","symbol":"gal"},{"unit":"qt","name":"US quart","symbol":"qt"},{"unit":"cup","name":"US cup","symbol":"cup"}]},{"category":"time","name":"Time","baseUnit":"s","units":[{"unit":"ms","name":"Millisecond","symbol":"ms"},{"unit":"s","name":"Second","symbol":"s"},{"unit":"min","name":"Minute","symbol":"min"},{"unit":"h","name":"Hour","symbol":"h"},{"unit":"d","name":"Day","symbol":"d"},{"unit":"wk","name":"Week","symbol":"wk"}]},{"category":"speed","name":"Speed","baseUnit":"m/s","units":[{"unit":"m/s","name":"Metre per second","symbol":"m/s"},{"unit":"km/h","name":"Kilometre per hour","symbol":"km/h"},{"unit":"mph","name":"Mile per hour","symbol":"mph"},{"unit":"kn","name":"Knot","symbol":"kn"}]},{"category":"data","name":"Digital storage","baseUnit":"B","units":[{"unit":"b","name":"Byte","symbol":"B"},{"unit":"kb","name":"Kilobyte (1000 B)","symbol":"kB"},{"unit":"kib","name":"Kibibyte (1024 B)","symbol":"KiB"},{"unit":"mb","name":"Megabyte (1000² B)","symbol":"MB"},{"unit":"mib","name":"Mebibyte (1024² B)","symbol":"MiB"},{"unit":"gb","name":"Gigabyte (1000³ B)","symbol":"GB"},{"unit":"gib","name":"Gibibyte (1024³ B)","symbol":"GiB"},{"unit":"tb","name":"Terabyte (1000⁴ B)","symbol":"TB"},{"unit":"tib","name":"Tebibyte (1024⁴ B)","symbol":"TiB"}]}]}
+
+### Function 4: deleting one record by id
+
+------------------------------------------------------------------------------
+POST /api/calculate
+  request : {"expression":"999-1"}
+  status  : 201
+  response: {"success":true,"expression":"999-1","result":998,"resultText":"998","operation":"subtraction","mode":"basic","durationMs":0.049,"historyId":30,"createdAt":"2026-10-15 03:00:47"}
+  (the record created above has the id 30)
+
+------------------------------------------------------------------------------
+DELETE /api/history/30
+  status  : 200
+  response: {"success":true,"deletedId":30,"remaining":29}
+
+------------------------------------------------------------------------------
+GET /api/history?keyword=999-1
+  status  : 200
+  response: {"success":true,"total":0,"returned":0,"limit":10,"offset":0,"records":[]}
+
+### Extended features: statistics, number base conversion, unit conversion
+
+------------------------------------------------------------------------------
+GET /api/stats?days=7
+  status  : 200
+  response: {"success":true,"total":29,"byOperation":{"compound":14,"addition":4,"division":4,"multiplication":3,"subtraction":2,"power":1,"scientific":1},"daily":[{"day":"2026-10-15","count":13},{"day":"2026-10-02","count":6},{"day":"2026-10-01","count":10}],"lastCalculationAt":"2026-10-15 03:00:47"}
+
+------------------------------------------------------------------------------
+POST /api/convert/base
+  request : {"value":255}
+  status  : 200
+  response: {"success":true,"value":255,"decimal":"255","conversions":[{"base":2,"result":"11111111"},{"base":8,"result":"377"},{"base":10,"result":"255"},{"base":16,"result":"ff"},{"base":36,"result":"73"}],"result":"11111111"}
+
+------------------------------------------------------------------------------
+POST /api/convert/base
+  request : {"value":"ff","fromBase":16}
+  status  : 200
+  response: {"success":true,"input":"ff","fromBase":16,"value":255,"decimal":"255","conversions":[{"base":2,"result":"11111111"},{"base":8,"result":"377"},{"base":10,"result":"255"},{"base":16,"result":"ff"},{"base":36,"result":"73"}]}
+
+------------------------------------------------------------------------------
+POST /api/convert/unit
+  request : {"value":100,"from":"km/h","to":"mph"}
+  status  : 200
+  response: {"success":true,"value":100,"category":"speed","from":{"unit":"km/h","name":"Kilometre per hour","symbol":"km/h"},"to":{"unit":"mph","name":"Mile per hour","symbol":"mph"},"result":62.1371192237,"resultText":"62.1371192237"}
+
+------------------------------------------------------------------------------
+POST /api/convert/unit
+  request : {"value":100,"from":"\u00b0c","to":"\u00b0f"}
+  status  : 200
+  response: {"success":true,"value":100,"category":"temperature","from":{"unit":"°c","name":"Celsius","symbol":"°C"},"to":{"unit":"°f","name":"Fahrenheit","symbol":"°F"},"result":212,"resultText":"212"}
+
+### Transport: an unknown endpoint, and a missing history record
+
+------------------------------------------------------------------------------
+GET /api/does-not-exist
+  status  : 404
+  response: 
+
+------------------------------------------------------------------------------
+DELETE /api/history/999999
+  status  : 404
+  response: 
+
+==============================================================================

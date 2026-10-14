@@ -1,0 +1,29 @@
+{
+  "name": "calculator-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Back-end service of the front-end/back-end separated calculator system (expression parsing, evaluation and history persistence).",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node scripts/runTests.js",
+    "db:init": "node scripts/seed.js",
+    "db:reset": "node scripts/seed.js --reset"
+  },
+  "keywords": [
+    "calculator",
+    "express",
+    "sqlite",
+    "expression-parser",
+    "rest-api"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
